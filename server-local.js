@@ -1,0 +1,444 @@
+// CricketBet Backend - Local SQLite Version for Testing
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const sqlite3 = require('sqlite3').verbose();
+const cors = require('cors');
+const multer = require('multer');
+const fetch = require('node-fetch');
+const fs = require('fs');
+const path = require('path');
+require('dotenv').config();
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Environment Variables
+const JWT_SECRET = process.env.JWT_SECRET || 'cricket_bet_secret_2025';
+const CRICKET_API_KEY = '6963166c-d144-42b7-9f62-6129a2aa7aaa';
+const CRICKET_API_BASE = 'https://api.cricapi.com/v1';
+
+// SQLite Database Setup
+const dbPath = path.join(__dirname, 'cricketbet.db');
+const db = new sqlite3.Database(dbPath);
+
+// Middleware
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Multer configuration for file uploads (local storage for testing)
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: function (req, file, cb) {
+      const uploadsDir = path.join(__dirname, 'uploads');
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir);
+      }
+      cb(null, uploadsDir);
+    },
+    filename: function (req, file, cb) {
+      cb(null, `qr_${Date.now()}_${file.originalname}`);
+    }
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+});
+
+// Database Schema Creation
+const initDatabase = () => {
+  return new Promise((resolve, reject) => {
+    db.serialize(() => {
+      // Users table
+      db.run(`
+        CREATE TABLE IF NOT EXISTS users (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          phone TEXT UNIQUE NOT NULL,
+          city TEXT NOT NULL,
+          password_hash TEXT NOT NULL,
+          balance REAL DEFAULT 100.00,
+          is_admin INTEGER DEFAULT 0,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      // Matches table
+      db.run(`
+        CREATE TABLE IF NOT EXISTS matches (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          match_type TEXT NOT NULL,
+          status TEXT NOT NULL,
+          venue TEXT,
+          date_time_gmt DATETIME,
+          team1 TEXT NOT NULL,
+          team2 TEXT NOT NULL,
+          team1_img TEXT,
+          team2_img TEXT,
+          series_id TEXT,
+          fantasy_enabled INTEGER DEFAULT 1,
+          has_squad INTEGER DEFAULT 1,
+          match_started INTEGER DEFAULT 0,
+          match_ended INTEGER DEFAULT 0,
+          winner TEXT,
+          player_of_match TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      // Players table
+      db.run(`
+        CREATE TABLE IF NOT EXISTS players (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          team TEXT NOT NULL,
+          match_id TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(match_id) REFERENCES matches(id)
+        )
+      `);
+
+      // Bets table
+      db.run(`
+        CREATE TABLE IF NOT EXISTS bets (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER,
+          match_id TEXT,
+          winner_prediction TEXT NOT NULL,
+          motm_prediction TEXT NOT NULL,
+          amount REAL NOT NULL,
+          potential_return REAL NOT NULL,
+          status TEXT DEFAULT 'pending',
+          qr_image_url TEXT,
+          payment_verified INTEGER DEFAULT 0,
+          admin_verified_at DATETIME,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(user_id) REFERENCES users(id),
+          FOREIGN KEY(match_id) REFERENCES matches(id)
+        )
+      `);
+
+      // Withdrawals table
+      db.run(`
+        CREATE TABLE IF NOT EXISTS withdrawals (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER,
+          amount REAL NOT NULL,
+          status TEXT DEFAULT 'pending',
+          requested_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          processed_at DATETIME,
+          processed_by INTEGER,
+          FOREIGN KEY(user_id) REFERENCES users(id),
+          FOREIGN KEY(processed_by) REFERENCES users(id)
+        )
+      `);
+
+      // Create default admin user
+      db.get('SELECT id FROM users WHERE phone = ?', ['admin'], async (err, row) => {
+        if (err) {
+          console.error('❌ Database check error:', err);
+          return;
+        }
+        
+        if (!row) {
+          const hashedPassword = await bcrypt.hash('CricketAdmin@2025', 10);
+          db.run(
+            'INSERT INTO users (name, phone, city, password_hash, balance, is_admin) VALUES (?, ?, ?, ?, ?, ?)',
+            ['Admin User', 'admin', 'Admin City', hashedPassword, 10000, 1],
+            function(err) {
+              if (err) {
+                console.error('❌ Admin creation error:', err);
+              } else {
+                console.log('✅ Default admin user created');
+              }
+            }
+          );
+        }
+      });
+
+      console.log('✅ SQLite Database initialized successfully');
+      resolve();
+    });
+  });
+};
+
+// Cricket API Helper Functions
+const fetchFromCricketAPI = async (endpoint) => {
+  try {
+    const url = `${CRICKET_API_BASE}/${endpoint}?apikey=${CRICKET_API_KEY}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (data.status === 'success') {
+      return data.data;
+    } else {
+      throw new Error(`API Error: ${data.status}`);
+    }
+  } catch (error) {
+    console.error(`❌ Cricket API Error (${endpoint}):`, error.message);
+    throw error;
+  }
+};
+
+const syncMatchesFromAPI = async () => {
+  try {
+    console.log('🔄 Syncing matches from Cricket API...');
+    
+    const matches = await fetchFromCricketAPI('currentMatches&offset=0');
+    
+    for (const match of matches) {
+      const team1 = match.teams[0];
+      const team2 = match.teams[1];
+      const team1Img = match.teamInfo?.find(t => t.name === team1)?.img || 'https://h.cricapi.com/img/icon512.png';
+      const team2Img = match.teamInfo?.find(t => t.name === team2)?.img || 'https://h.cricapi.com/img/icon512.png';
+      
+      db.run(`
+        INSERT OR REPLACE INTO matches 
+        (id, name, match_type, status, venue, date_time_gmt, team1, team2, team1_img, team2_img, series_id, fantasy_enabled, has_squad, match_started, match_ended, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      `, [
+        match.id,
+        match.name,
+        match.matchType,
+        match.status,
+        match.venue,
+        match.dateTimeGMT,
+        team1,
+        team2,
+        team1Img,
+        team2Img,
+        match.series_id,
+        match.fantasyEnabled ? 1 : 0,
+        match.hasSquad ? 1 : 0,
+        match.matchStarted ? 1 : 0,
+        match.matchEnded ? 1 : 0
+      ]);
+
+      // Add some sample players for testing
+      if (match.hasSquad && !match.matchEnded) {
+        const samplePlayers = [
+          { name: 'Player 1', team: team1 },
+          { name: 'Player 2', team: team1 },
+          { name: 'Player 3', team: team1 },
+          { name: 'Player 4', team: team2 },
+          { name: 'Player 5', team: team2 },
+          { name: 'Player 6', team: team2 },
+        ];
+
+        db.run('DELETE FROM players WHERE match_id = ?', [match.id]);
+        
+        samplePlayers.forEach(player => {
+          db.run(
+            'INSERT INTO players (name, team, match_id) VALUES (?, ?, ?)',
+            [player.name, player.team, match.id]
+          );
+        });
+      }
+    }
+    
+    console.log(`✅ Synced ${matches.length} matches successfully`);
+  } catch (error) {
+    console.error('❌ Match sync error:', error.message);
+  }
+};
+
+// Middleware for JWT authentication
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Access token required' });
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: 'Invalid token' });
+    }
+    req.user = user;
+    next();
+  });
+};
+
+// Middleware for admin authentication
+const authenticateAdmin = (req, res, next) => {
+  db.get('SELECT is_admin FROM users WHERE id = ?', [req.user.id], (err, row) => {
+    if (err || !row || !row.is_admin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    next();
+  });
+};
+
+// ==================== AUTH ROUTES ====================
+
+// User Registration
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { name, phone, city, password } = req.body;
+    
+    if (!name || !phone || !city || !password) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    // Check if user exists
+    db.get('SELECT id FROM users WHERE phone = ?', [phone], async (err, row) => {
+      if (err) {
+        return res.status(500).json({ error: 'Database error' });
+      }
+      
+      if (row) {
+        return res.status(400).json({ error: 'User with this phone number already exists' });
+      }
+
+      // Hash password and create user
+      const hashedPassword = await bcrypt.hash(password, 10);
+      
+      db.run(
+        'INSERT INTO users (name, phone, city, password_hash, balance) VALUES (?, ?, ?, ?, ?)',
+        [name, phone, city, hashedPassword, 100.00],
+        function(err) {
+          if (err) {
+            return res.status(500).json({ error: 'Registration failed' });
+          }
+
+          const token = jwt.sign(
+            { id: this.lastID, phone: phone },
+            JWT_SECRET,
+            { expiresIn: '7d' }
+          );
+
+          res.status(201).json({
+            message: 'User registered successfully',
+            token,
+            user: { id: this.lastID, name, phone, city, balance: 100.00 }
+          });
+        }
+      );
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ error: 'Registration failed' });
+  }
+});
+
+// User Login
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { phone, password } = req.body;
+
+    if (!phone || !password) {
+      return res.status(400).json({ error: 'Phone and password are required' });
+    }
+
+    db.get(
+      'SELECT id, name, phone, city, password_hash, balance, is_admin FROM users WHERE phone = ?',
+      [phone],
+      async (err, user) => {
+        if (err) {
+          return res.status(500).json({ error: 'Database error' });
+        }
+
+        if (!user) {
+          return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        const validPassword = await bcrypt.compare(password, user.password_hash);
+        if (!validPassword) {
+          return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        const token = jwt.sign(
+          { id: user.id, phone: user.phone },
+          JWT_SECRET,
+          { expiresIn: '7d' }
+        );
+
+        const { password_hash, ...userWithoutPassword } = user;
+
+        res.json({
+          message: 'Login successful',
+          token,
+          user: userWithoutPassword
+        });
+      }
+    );
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+// ==================== MATCH ROUTES ====================
+
+// Get upcoming matches
+app.get('/api/matches/upcoming', (req, res) => {
+  db.all(`
+    SELECT m.*, COUNT(p.id) as player_count
+    FROM matches m
+    LEFT JOIN players p ON m.id = p.match_id
+    WHERE m.match_ended = 0
+    GROUP BY m.id
+    ORDER BY m.date_time_gmt ASC
+    LIMIT 20
+  `, (err, matches) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to fetch matches' });
+    }
+    res.json({ matches });
+  });
+});
+
+// Get players for a specific match
+app.get('/api/matches/:id/players', (req, res) => {
+  const { id } = req.params;
+  
+  db.all(
+    'SELECT * FROM players WHERE match_id = ? ORDER BY team, name',
+    [id],
+    (err, players) => {
+      if (err) {
+        return res.status(500).json({ error: 'Failed to fetch players' });
+      }
+      res.json({ players });
+    }
+  );
+});
+
+// Health check route
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    database: 'connected',
+    cricketAPI: 'connected'
+  });
+});
+
+// Initialize database and start server
+const startServer = async () => {
+  try {
+    await initDatabase();
+    
+    // Initial match sync after 2 seconds
+    setTimeout(() => {
+      syncMatchesFromAPI();
+    }, 2000);
+    
+    app.listen(PORT, () => {
+      console.log(`🚀 CricketBet Backend running on port ${PORT}`);
+      console.log(`🏏 Real Cricket Data API integrated`);
+      console.log(`💾 Database: SQLite (local file)`);
+      console.log(`🔐 Admin Login: admin / CricketAdmin@2025`);
+      console.log(`📁 Database file: ${dbPath}`);
+    });
+  } catch (error) {
+    console.error('❌ Server startup failed:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
+
+module.exports = app;

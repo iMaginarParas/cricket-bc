@@ -1,0 +1,7 @@
+node_modules/
+.env
+.env.local
+cricketbet.db
+uploads/
+*.log
+.DS_Store

@@ -1,0 +1,24 @@
+# CricketBet Backend Environment Variables
+
+# Server Configuration
+PORT=3000
+NODE_ENV=development
+# JWT_SECRET=cricket_bet_super_secret_key_2025
+JWT_SECRET=cricket_bet_local_secret_2025
+
+
+# Database Configuration (Railway PostgreSQL)
+DATABASE_URL=postgresql://username:password@host:port/database
+
+# Cloudinary Configuration (for QR code uploads)
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+
+# Cricket API Configuration (already provided)
+CRICKET_API_KEY=6963166c-d144-42b7-9f62-6129a2aa7aaa
+CRICKET_API_BASE=https://api.cricapi.com/v1
+
+# Admin Configuration
+DEFAULT_ADMIN_EMAIL=admin@cricketbet.com
+DEFAULT_ADMIN_PASSWORD=CricketAdmin@2025
