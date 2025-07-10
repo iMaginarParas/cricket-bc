@@ -1,0 +1,2489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CricketBet</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000;
+            color: #fff;
+            line-height: 1.6;
+            padding-bottom: 80px; /* Space for bottom nav */
+        }
+
+        .navbar {
+            background: linear-gradient(90deg, #dc2626, #1f1f1f);
+            padding: 1rem 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 20px rgba(220, 38, 38, 0.3);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo::before {
+            content: '';
+            width: 32px;
+            height: 32px;
+            background: url('https://cdn-icons-png.flaticon.com/512/857/857418.png') no-repeat center;
+            background-size: contain;
+        }
+
+        .banner {
+            background: url('bg.png');
+            background-size: cover;
+            background-position: center;
+            height: 50vh;
+            margin-top: 70px;
+            position: relative;
+        }
+
+        /* Mobile Banner */
+        @media (max-width: 768px) {
+            .banner {
+                background: url('mob.png');
+                background-size: cover;
+                background-position: center;
+                height: 25vh;
+                min-height: 100px;
+            }
+        }
+
+        .banner::before {
+            display: none;
+        }
+
+        .banner-content {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            padding: 0 20px;
+        }
+
+        .banner h1 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            background: linear-gradient(45deg, #fff, #dc2626);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .banner p {
+            font-size: 1.1rem;
+            margin-bottom: 25px;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #dc2626;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .content-section {
+            display: none;
+            min-height: calc(100vh - 150px);
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 50px 20px;
+            color: #dc2626;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(220, 38, 38, 0.2);
+            border-top: 4px solid #dc2626;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            text-align: center;
+            padding: 50px 20px;
+            color: #ef4444;
+        }
+
+        .error-message h3 {
+            margin-bottom: 10px;
+        }
+
+        /* Home Screen Compact Match Cards */
+        .match-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .match-card-compact {
+            background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+            border-radius: 12px;
+            padding: 16px;
+            border-left: 4px solid #dc2626;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .match-card-compact:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(220, 38, 38, 0.2);
+        }
+
+        .match-header-compact {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .match-title-compact {
+            font-size: 0.9rem;
+            color: #dc2626;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .match-time {
+            font-size: 0.8rem;
+            color: #aaa;
+            text-align: right;
+            line-height: 1.2;
+        }
+
+        .teams-compact {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .team-compact {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .team-flag-compact {
+            width: 32px;
+            height: 24px;
+            background: linear-gradient(45deg, #dc2626, #b91c1c);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        .team-name-compact {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .vs-compact {
+            font-size: 0.9rem;
+            color: #dc2626;
+            font-weight: bold;
+        }
+
+        .status-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        /* Detailed Match Card for Modal */
+        .match-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            overflow-y: auto;
+        }
+
+        .match-modal.active {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .match-modal-content {
+            background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+            border-radius: 15px;
+            padding: 25px;
+            width: 100%;
+            max-width: 500px;
+            margin-top: 20px;
+            border: 2px solid #dc2626;
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #dc2626;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-modal:hover {
+            background: rgba(220, 38, 38, 0.1);
+        }
+
+        .teams-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .team {
+            text-align: center;
+            flex: 1;
+        }
+
+        .team-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .team-flag {
+            width: 50px;
+            height: 35px;
+            background: linear-gradient(45deg, #dc2626, #b91c1c);
+            border-radius: 8px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 10px rgba(220, 38, 38, 0.3);
+        }
+
+        .vs-divider {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #dc2626;
+            margin: 0 20px;
+        }
+
+        .match-details {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #333;
+        }
+
+        .prediction-section {
+            margin-bottom: 25px;
+        }
+
+        .prediction-group {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #333;
+        }
+
+        .prediction-label {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #dc2626;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .prediction-label::before {
+            content: '';
+            width: 20px;
+            height: 20px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .prediction-label.winner::before {
+            background-image: url('https://cdn-icons-png.flaticon.com/512/2583/2583788.png');
+        }
+
+        .prediction-label.motm::before {
+            background-image: url('https://cdn-icons-png.flaticon.com/512/1021/1021222.png');
+        }
+
+        .prediction-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .prediction-btn {
+            padding: 12px 15px;
+            border: 2px solid #444;
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .prediction-btn:hover {
+            border-color: #dc2626;
+            background: rgba(220, 38, 38, 0.1);
+        }
+
+        .prediction-btn.selected {
+            border-color: #dc2626;
+            background: linear-gradient(45deg, #dc2626, #b91c1c);
+            color: white;
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+        }
+
+        .player-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .player-options::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .player-options::-webkit-scrollbar-track {
+            background: #333;
+            border-radius: 3px;
+        }
+
+        .player-options::-webkit-scrollbar-thumb {
+            background: #dc2626;
+            border-radius: 3px;
+        }
+
+        /* Bet Amount Selection */
+        .bet-section {
+            margin-bottom: 20px;
+        }
+
+        .bet-section-label {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #dc2626;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bet-section-label::before {
+            content: '💰';
+            font-size: 20px;
+        }
+
+        .amount-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .amount-btn {
+            padding: 12px 15px;
+            border: 2px solid #444;
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .amount-btn:hover {
+            border-color: #dc2626;
+            background: rgba(220, 38, 38, 0.1);
+        }
+
+        .amount-btn.selected {
+            border-color: #dc2626;
+            background: linear-gradient(45deg, #dc2626, #b91c1c);
+            color: white;
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+        }
+
+        .selected-amount-display {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 15px;
+            border: 1px solid #333;
+            font-size: 18px;
+            font-weight: 600;
+            color: #dc2626;
+        }
+
+        .place-bet-btn {
+            background: linear-gradient(45deg, #dc2626, #b91c1c);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            width: 100%;
+        }
+
+        .place-bet-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(220, 38, 38, 0.4);
+        }
+
+        .place-bet-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .return-info {
+            background: linear-gradient(45deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.1));
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #22c55e;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .return-info::before {
+            content: '';
+            width: 20px;
+            height: 20px;
+            background: url('https://cdn-icons-png.flaticon.com/512/3135/3135715.png') no-repeat center;
+            background-size: contain;
+            filter: hue-rotate(120deg) brightness(1.2);
+        }
+
+        /* My Bets Section */
+        .bet-history-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .bet-item {
+            background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid #dc2626;
+            transition: all 0.3s ease;
+        }
+
+        .bet-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(220, 38, 38, 0.2);
+        }
+
+        .bet-match {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #fff;
+            font-size: 1.1rem;
+        }
+
+        .bet-details {
+            font-size: 0.9rem;
+            color: #aaa;
+            margin-bottom: 8px;
+        }
+
+        .bet-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .bet-amount {
+            font-weight: 600;
+            color: #dc2626;
+            font-size: 1.1rem;
+        }
+
+        .bet-status {
+            font-size: 0.8rem;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .status-won {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .status-lost {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        /* Profile Section */
+        .profile-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .profile-card {
+            background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid #333;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .profile-avatar {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(45deg, #dc2626, #b91c1c);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            position: relative;
+        }
+
+        .profile-avatar::before {
+            content: '';
+            width: 40px;
+            height: 40px;
+            background: url('https://cdn-icons-png.flaticon.com/512/1077/1077012.png') no-repeat center;
+            background-size: contain;
+            filter: invert(1);
+        }
+
+        .profile-info h3 {
+            color: #dc2626;
+            margin-bottom: 5px;
+        }
+
+        .profile-info p {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #333;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #dc2626;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #aaa;
+            font-size: 0.8rem;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(90deg, #1f1f1f, #dc2626);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 15px 0;
+            z-index: 1000;
+            box-shadow: 0 -2px 20px rgba(220, 38, 38, 0.3);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            padding: 8px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #aaa;
+            text-decoration: none;
+        }
+
+        .nav-item.active {
+            background: rgba(220, 38, 38, 0.2);
+            color: #dc2626;
+        }
+
+        .nav-item:hover {
+            color: #dc2626;
+        }
+
+        .nav-icon {
+            font-size: 1.2rem;
+        }
+
+        .nav-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        /* Splash Screen */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #000000, #1a1a1a, #dc2626);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .splash-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .splash-logo {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(45deg, #dc2626, #b91c1c);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(220, 38, 38, 0.3);
+            animation: splashPulse 2s ease-in-out infinite;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .splash-logo::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70px;
+            height: 70px;
+            background: url('https://cdn-icons-png.flaticon.com/512/857/857418.png') no-repeat center;
+            background-size: contain;
+            filter: invert(1) brightness(2);
+        }
+
+        .splash-logo::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            animation: splashShine 3s ease-in-out infinite;
+        }
+
+        .splash-title {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 15px;
+            text-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            animation: splashSlideUp 1s ease-out 0.5s both;
+        }
+
+        .splash-subtitle {
+            font-size: 1.2rem;
+            color: #dc2626;
+            margin-bottom: 40px;
+            font-weight: 600;
+            animation: splashSlideUp 1s ease-out 0.7s both;
+        }
+
+        .splash-loader {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(220, 38, 38, 0.2);
+            border-top: 4px solid #dc2626;
+            border-radius: 50%;
+            animation: splashSpin 1s linear infinite;
+        }
+
+        .splash-version {
+            position: absolute;
+            bottom: 30px;
+            color: #666;
+            font-size: 0.9rem;
+            animation: splashFadeIn 1s ease-out 1s both;
+        }
+
+        @keyframes splashPulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 20px 40px rgba(220, 38, 38, 0.3);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 25px 50px rgba(220, 38, 38, 0.5);
+            }
+        }
+
+        @keyframes splashShine {
+            0% {
+                transform: translateX(-100%) translateY(-100%) rotate(45deg);
+            }
+            50% {
+                transform: translateX(0%) translateY(0%) rotate(45deg);
+            }
+            100% {
+                transform: translateX(100%) translateY(100%) rotate(45deg);
+            }
+        }
+
+        @keyframes splashSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes splashSpin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes splashFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Auth Modal */
+        .auth-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 3500;
+            backdrop-filter: blur(5px);
+        }
+
+        .auth-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-modal-content {
+            background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+            border: 2px solid #dc2626;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .auth-modal h3 {
+            color: #dc2626;
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+
+        .auth-modal p {
+            color: #aaa;
+            margin-bottom: 25px;
+            font-size: 0.9rem;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .auth-tab.active {
+            background: #dc2626;
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            color: #dc2626;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #444;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #dc2626;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: #888;
+        }
+
+        .auth-btn {
+            background: linear-gradient(45deg, #dc2626, #b91c1c);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .auth-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .auth-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Payment Modal */
+        .payment-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 3000;
+            backdrop-filter: blur(5px);
+        }
+
+        .payment-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .payment-modal-content {
+            background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+            border: 2px solid #dc2626;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .payment-modal h3 {
+            color: #dc2626;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .qr-code {
+            width: 200px;
+            height: 200px;
+            background: white;
+            margin: 20px auto;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #dc2626;
+            overflow: hidden;
+        }
+
+        .qr-code img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .close-payment-btn {
+            background: linear-gradient(45deg, #dc2626, #b91c1c);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.3s ease;
+            width: 100%;
+        }
+
+        .close-payment-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Withdraw Modal */
+        .withdraw-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 3200;
+            backdrop-filter: blur(5px);
+        }
+
+        .withdraw-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .withdraw-modal-content {
+            background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+            border: 2px solid #22c55e;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .withdraw-modal h3 {
+            color: #22c55e;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .balance-display {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            color: #22c55e;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .withdraw-btn {
+            background: linear-gradient(45deg, #22c55e, #16a34a);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.3s ease;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .withdraw-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .withdraw-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .close-withdraw-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: #aaa;
+            border: 1px solid #444;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .close-withdraw-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+
+        /* Wallet Styles */
+        .wallet-tabs {
+            display: flex;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .wallet-tab {
+            flex: 1;
+            padding: 15px;
+            background: transparent;
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .wallet-tab.active {
+            background: #dc2626;
+            color: white;
+        }
+
+        .wallet-tab-content {
+            animation: fadeIn 0.3s ease;
+        }
+
+        .wallet-amount-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .wallet-amount-btn {
+            padding: 12px 15px;
+            border: 2px solid #444;
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .wallet-amount-btn:hover {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .wallet-amount-btn.selected {
+            border-color: #22c55e;
+            background: linear-gradient(45deg, #22c55e, #16a34a);
+            color: white;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+        }
+
+        .selected-wallet-amount {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 1px solid #333;
+            font-size: 18px;
+            font-weight: 600;
+            color: #22c55e;
+        }
+
+        .wallet-action-btn {
+            width: 100%;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .add-money-btn {
+            background: linear-gradient(45deg, #22c55e, #16a34a);
+            color: white;
+        }
+
+        .add-money-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(34, 197, 94, 0.4);
+        }
+
+        .withdraw-btn {
+            background: linear-gradient(45deg, #f59e0b, #d97706);
+            color: white;
+        }
+
+        .withdraw-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4);
+        }
+
+        .wallet-action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @media (max-width: 768px) {
+            .banner h1 {
+                font-size: 2rem;
+            }
+
+            .banner p {
+                font-size: 1rem;
+            }
+
+            .banner {
+                height: 30vh;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            .match-modal-content {
+                margin-top: 10px;
+                padding: 20px;
+            }
+
+            .teams-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .vs-divider {
+                margin: 10px 0;
+            }
+
+            .prediction-options {
+                grid-template-columns: 1fr;
+            }
+
+            .player-options {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .amount-buttons {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .notification {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            z-index: 4000;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            animation: slideInRight 0.5s ease;
+            max-width: 300px;
+        }
+
+        .notification.success {
+            background: linear-gradient(45deg, #22c55e, #16a34a);
+            color: white;
+        }
+
+        .notification.error {
+            background: linear-gradient(45deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div id="splashScreen" class="splash-screen">
+        <div class="splash-logo"></div>
+        <div class="splash-title">CricketBet</div>
+        <div class="splash-subtitle">Your Ultimate Cricket Betting Experience</div>
+        <div class="splash-loader"></div>
+        <div class="splash-version">v1.0.0</div>
+    </div>
+
+    <!-- Top Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                CricketBet
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Banner -->
+    <section class="banner">
+    </section>
+
+    <div class="container">
+        <!-- Home Section -->
+        <section id="home" class="content-section active">
+            <h2 class="section-title">Upcoming Matches</h2>
+            <div class="match-list" id="matchList">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>Loading matches...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- My Bets Section -->
+        <section id="mybets" class="content-section">
+            <h2 class="section-title">My Betting History</h2>
+            <div class="bet-history-container" id="betHistoryContainer">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>Loading bet history...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Wallet Section -->
+        <section id="wallet" class="content-section">
+            <h2 class="section-title">My Wallet</h2>
+            <div class="profile-container">
+                <!-- Balance Card -->
+                <div class="profile-card">
+                    <div style="text-align: center; margin-bottom: 25px;">
+                        <div style="width: 80px; height: 80px; background: linear-gradient(45deg, #22c55e, #16a34a); border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                            💰
+                        </div>
+                        <h3 style="color: #22c55e; margin-bottom: 10px; font-size: 1.5rem;">Available Balance</h3>
+                        <div style="color: #22c55e; font-size: 2.5rem; font-weight: bold;" id="walletBalance">₹0</div>
+                    </div>
+                </div>
+
+                <!-- Wallet Actions -->
+                <div class="profile-card">
+                    <h3 style="color: #dc2626; margin-bottom: 20px; text-align: center;">Wallet Actions</h3>
+                    
+                    <div class="wallet-tabs">
+                        <button class="wallet-tab active" onclick="switchWalletTab('add')">Add Money</button>
+                        <button class="wallet-tab" onclick="switchWalletTab('withdraw')">Withdraw</button>
+                    </div>
+
+                    <!-- Add Money Tab -->
+                    <div id="addMoneyTab" class="wallet-tab-content">
+                        <div class="form-group">
+                            <label>Select Amount</label>
+                            <div class="wallet-amount-buttons">
+                                <button class="wallet-amount-btn" onclick="selectWalletAmount(100)">₹100</button>
+                                <button class="wallet-amount-btn" onclick="selectWalletAmount(500)">₹500</button>
+                                <button class="wallet-amount-btn" onclick="selectWalletAmount(1000)">₹1000</button>
+                                <button class="wallet-amount-btn" onclick="selectWalletAmount(2000)">₹2000</button>
+                                <button class="wallet-amount-btn" onclick="selectWalletAmount(5000)">₹5000</button>
+                                <button class="wallet-amount-btn" onclick="selectWalletAmount(10000)">₹10000</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="customAddAmount">Or Enter Custom Amount</label>
+                            <input type="number" id="customAddAmount" class="form-input" placeholder="Enter amount" min="50" max="50000">
+                        </div>
+                        <div class="selected-wallet-amount" id="selectedAddAmount">
+                            Select or enter amount to add
+                        </div>
+                        <button onclick="processAddMoney()" class="wallet-action-btn add-money-btn" id="addMoneyBtn">
+                            💳 Add Money
+                        </button>
+                    </div>
+
+                    <!-- Withdraw Tab -->
+                    <div id="withdrawTab" class="wallet-tab-content" style="display: none;">
+                        <div class="form-group">
+                            <label for="withdrawAmount">Withdraw Amount</label>
+                            <input type="number" id="withdrawAmount" class="form-input" placeholder="Enter amount to withdraw" min="100">
+                        </div>
+                        <div style="background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; color: #ffc107;">
+                            ⚠️ Minimum withdrawal: ₹100 | Processing time: 24-48 hours
+                        </div>
+                        <button onclick="processWithdrawFromWallet()" class="wallet-action-btn withdraw-btn" id="withdrawFromWalletBtn">
+                            🏦 Request Withdrawal
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Transactions -->
+                <div class="profile-card">
+                    <h3 style="color: #dc2626; margin-bottom: 15px;">Recent Transactions</h3>
+                    <div id="recentTransactions">
+                        <div style="text-align: center; padding: 20px; color: #666;">
+                            <p>No recent transactions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section id="profile" class="content-section">
+            <h2 class="section-title">My Profile</h2>
+            <div class="profile-container">
+                <div class="profile-card">
+                    <div class="profile-header">
+                        <div class="profile-avatar">👤</div>
+                        <div class="profile-info">
+                            <h3 id="userName">Cricket Fan</h3>
+                            <p id="userDetails">Member since July 2025</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalBets">0</div>
+                            <div class="stat-label">Total Bets</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="wonBets">0</div>
+                            <div class="stat-label">Bets Won</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalStaked">₹0</div>
+                            <div class="stat-label">Total Staked</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalWinnings">₹0</div>
+                            <div class="stat-label">Total Winnings</div>
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="color: #22c55e; font-size: 0.9rem; margin-bottom: 5px;">Available Balance</div>
+                                <div style="color: #22c55e; font-size: 1.5rem; font-weight: bold;" id="userBalance">₹0</div>
+                            </div>
+                            <button onclick="openWithdrawModal()" style="background: linear-gradient(45deg, #22c55e, #16a34a); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                                💰 Withdraw
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="profile-card">
+                    <h3 style="color: #dc2626; margin-bottom: 15px;">Account Settings</h3>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button onclick="editProfile()" style="background: rgba(255,255,255,0.05); border: 1px solid #333; color: #fff; padding: 12px; border-radius: 8px; cursor: pointer;">
+                            Update Profile
+                        </button>
+                        <button style="background: rgba(255,255,255,0.05); border: 1px solid #333; color: #fff; padding: 12px; border-radius: 8px; cursor: pointer;">
+                            Payment Methods
+                        </button>
+                        <button style="background: rgba(255,255,255,0.05); border: 1px solid #333; color: #fff; padding: 12px; border-radius: 8px; cursor: pointer;">
+                            Notification Settings
+                        </button>
+                        <button onclick="logout()" style="background: rgba(239,68,68,0.2); border: 1px solid #ef4444; color: #ef4444; padding: 12px; border-radius: 8px; cursor: pointer;">
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="auth-modal">
+        <div class="auth-modal-content">
+            <h3>Welcome to CricketBet! 🏏</h3>
+            <p>Join the ultimate cricket betting experience</p>
+            
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
+                <button class="auth-tab" onclick="switchAuthTab('register')">Register</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="loginPhone">Phone Number</label>
+                    <input type="tel" id="loginPhone" name="phone" class="form-input" placeholder="Enter your phone number" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" name="password" class="form-input" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="auth-btn" id="loginBtn">Login</button>
+            </form>
+
+            <!-- Registration Form -->
+            <form id="registerForm" onsubmit="handleRegistration(event)" style="display: none;">
+                <div class="form-group">
+                    <label for="fullName">Full Name</label>
+                    <input type="text" id="fullName" name="name" class="form-input" placeholder="Enter your full name" required>
+                </div>
+                <div class="form-group">
+                    <label for="phoneNumber">Phone Number</label>
+                    <input type="tel" id="phoneNumber" name="phone" class="form-input" placeholder="Enter your phone number" required>
+                </div>
+                <div class="form-group">
+                    <label for="city">City</label>
+                    <input type="text" id="city" name="city" class="form-input" placeholder="Enter your city" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-input" placeholder="Create a password" required>
+                </div>
+                <button type="submit" class="auth-btn" id="registerBtn">Register</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Match Detail Modal -->
+    <div id="matchModal" class="match-modal">
+        <div class="match-modal-content">
+            <button class="close-modal" onclick="closeMatchModal()">✕</button>
+            <div id="matchModalContent">
+                <!-- Match details will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment/Add Money Modal -->
+    <div id="paymentModal" class="payment-modal">
+        <div class="payment-modal-content">
+            <h3>Add Money to Wallet</h3>
+            <p id="paymentAmount" style="font-size: 1.2rem; color: #22c55e; font-weight: 600;">Amount to Add: ₹0</p>
+            <div class="qr-code">
+                <img src="qr.png" alt="Payment QR Code" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            <p style="font-size: 14px; color: #aaa; margin-bottom: 15px;">
+                Scan the QR code with any UPI app like PhonePe, Paytm, or GPay
+            </p>
+            <button class="close-payment-btn" onclick="closePaymentModal()">Payment Completed</button>
+        </div>
+    </div>
+
+    <!-- Withdraw Modal -->
+    <div id="withdrawModal" class="withdraw-modal">
+        <div class="withdraw-modal-content">
+            <h3>💰 Withdraw Funds</h3>
+            <div class="balance-display">
+                Available Balance: <span id="withdrawBalance">₹0</span>
+            </div>
+            <div class="form-group" style="text-align: left; margin-bottom: 20px;">
+                <label for="withdrawAmount">Withdraw Amount</label>
+                <input type="number" id="withdrawAmount" class="form-input" placeholder="Enter amount to withdraw" min="100">
+            </div>
+            <div style="background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; color: #ffc107;">
+                ⚠️ Minimum withdrawal amount is ₹100. Processing time: 24-48 hours
+            </div>
+            <button onclick="processWithdraw()" class="withdraw-btn" id="withdrawBtn">Request Withdrawal</button>
+            <button onclick="closeWithdrawModal()" class="close-withdraw-btn">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="showSection('home')">
+            <div class="nav-icon home">🏠</div>
+            <div class="nav-label">Home</div>
+        </div>
+        <div class="nav-item" onclick="showSection('mybets')">
+            <div class="nav-icon bets">📊</div>
+            <div class="nav-label">My Bets</div>
+        </div>
+        <div class="nav-item" onclick="showSection('profile')">
+            <div class="nav-icon profile">👤</div>
+            <div class="nav-label">Profile</div>
+        </div>
+    </nav>
+
+    <script>
+        // API Configuration
+        const API_BASE = 'https://cricket-bc-production.up.railway.app/api';
+        
+        // Global state
+        let authToken = localStorage.getItem('cricketBetToken');
+        let userData = null;
+        let userBalance = 0;
+        let allMatches = [];
+        let allBets = [];
+        let currentBets = {};
+        let currentMatchId = null;
+        let selectedAmount = 0;
+        let matchPlayers = {};
+
+        // Bet amount options
+        const betAmounts = [10, 20, 50, 100, 500, 1000];
+
+        // API Helper Functions
+        async function apiCall(endpoint, options = {}) {
+            try {
+                const config = {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+                    },
+                    ...options
+                };
+
+                const response = await fetch(`${API_BASE}${endpoint}`, config);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Server down');
+                }
+
+                return data;
+            } catch (error) {
+                console.error('API Error:', error);
+                if (error.message.includes('Failed to fetch')) {
+                    throw new Error('Server down');
+                }
+                throw error;
+            }
+        }
+
+        // Auth Functions
+        function switchAuthTab(tab) {
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const tabs = document.querySelectorAll('.auth-tab');
+
+            tabs.forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (tab === 'login') {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+            } else {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+            }
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            btn.disabled = true;
+            btn.textContent = 'Logging in...';
+
+            try {
+                const formData = new FormData(event.target);
+                const response = await apiCall('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        phone: formData.get('phone'),
+                        password: formData.get('password')
+                    })
+                });
+
+                authToken = response.token;
+                userData = response.user;
+                localStorage.setItem('cricketBetToken', authToken);
+
+                document.getElementById('authModal').classList.remove('active');
+                showNotification('Login Successful!', 'Welcome back to CricketBet', 'success');
+                
+                await initializeUserData();
+            } catch (error) {
+                showNotification('Login Failed', error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Login';
+            }
+        }
+
+        async function handleRegistration(event) {
+            event.preventDefault();
+            const btn = document.getElementById('registerBtn');
+            btn.disabled = true;
+            btn.textContent = 'Registering...';
+
+            try {
+                const formData = new FormData(event.target);
+                const response = await apiCall('/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        name: formData.get('name'),
+                        phone: formData.get('phone'),
+                        city: formData.get('city'),
+                        password: formData.get('password')
+                    })
+                });
+
+                authToken = response.token;
+                userData = response.user;
+                localStorage.setItem('cricketBetToken', authToken);
+
+                document.getElementById('authModal').classList.remove('active');
+                showNotification('Registration Successful!', response.message, 'success');
+                
+                await initializeUserData();
+            } catch (error) {
+                showNotification('Registration Failed', error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Register';
+            }
+        }
+
+        async function initializeUserData() {
+            if (!authToken) return;
+
+            try {
+                // Get user wallet data
+                const walletData = await apiCall('/user/wallet');
+                userBalance = walletData.balance;
+                
+                // Update profile
+                updateUserProfile();
+                updateProfileStats(walletData);
+                
+                // Load matches and bets
+                await loadMatches();
+                await loadUserBets();
+            } catch (error) {
+                showNotification('Error', 'Failed to load user data', 'error');
+            }
+        }
+
+        // Match Functions
+        async function loadMatches() {
+            try {
+                const response = await apiCall('/matches/upcoming');
+                allMatches = response.matches || [];
+                renderCompactMatches();
+            } catch (error) {
+                document.getElementById('matchList').innerHTML = `
+                    <div class="error-message">
+                        <h3>Failed to Load Matches</h3>
+                        <p>${error.message}</p>
+                        <button onclick="loadMatches()" style="background: #dc2626; color: white; border: none; padding: 10px 20px; border-radius: 5px; margin-top: 10px; cursor: pointer;">
+                            Retry
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        async function loadMatchPlayers(matchId) {
+            try {
+                const response = await apiCall(`/matches/${matchId}/players`);
+                matchPlayers[matchId] = response.players || [];
+            } catch (error) {
+                console.error('Failed to load players:', error);
+                matchPlayers[matchId] = [];
+            }
+        }
+
+        function renderCompactMatches() {
+            const container = document.getElementById('matchList');
+            
+            if (allMatches.length === 0) {
+                container.innerHTML = `
+                    <div class="error-message">
+                        <h3>No Matches Available</h3>
+                        <p>Check back later for upcoming matches</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+            
+            allMatches.forEach(match => {
+                const matchDate = match.date_time_gmt ? new Date(match.date_time_gmt) : new Date();
+                
+                const matchCard = document.createElement('div');
+                matchCard.className = 'match-card-compact';
+                matchCard.onclick = () => openMatchModal(match.id);
+                
+                matchCard.innerHTML = `
+                    <div class="match-header-compact">
+                        <div class="match-title-compact">${match.name}</div>
+                        <div class="match-time">
+                            <div>${matchDate.toLocaleDateString()}</div>
+                            <div>${matchDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                        </div>
+                    </div>
+                    <div class="teams-compact">
+                        <div class="team-compact">
+                            <div class="team-flag-compact">${match.team1.charAt(0)}</div>
+                            <div class="team-name-compact">${match.team1}</div>
+                        </div>
+                        <div class="vs-compact">VS</div>
+                        <div class="team-compact">
+                            <div class="team-name-compact">${match.team2}</div>
+                            <div class="team-flag-compact">${match.team2.charAt(0)}</div>
+                        </div>
+                    </div>
+                    <div class="status-badge">${match.status}</div>
+                `;
+                
+                container.appendChild(matchCard);
+            });
+        }
+
+        async function openMatchModal(matchId) {
+            if (!authToken) {
+                document.getElementById('authModal').classList.add('active');
+                return;
+            }
+            
+            currentMatchId = matchId;
+            selectedAmount = 0;
+            const match = allMatches.find(m => m.id === matchId);
+            if (!match) return;
+            
+            // Load players for this match
+            await loadMatchPlayers(matchId);
+            const players = matchPlayers[matchId] || [];
+            
+            const modalContent = document.getElementById('matchModalContent');
+            modalContent.innerHTML = `
+                <h2 style="color: #dc2626; margin-bottom: 15px;">${match.name}</h2>
+                
+                <div class="match-details">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 0.9rem;">
+                        <div><strong>Type:</strong> ${match.match_type}</div>
+                        <div><strong>Venue:</strong> ${match.venue || 'TBD'}</div>
+                        <div><strong>Date:</strong> ${match.date_time_gmt ? new Date(match.date_time_gmt).toLocaleDateString() : 'TBD'}</div>
+                        <div><strong>Time:</strong> ${match.date_time_gmt ? new Date(match.date_time_gmt).toLocaleTimeString() : 'TBD'}</div>
+                    </div>
+                </div>
+                
+                <div class="teams-container">
+                    <div class="team">
+                        <div class="team-name">${match.team1}</div>
+                        <div class="team-flag">${match.team1.charAt(0)}</div>
+                    </div>
+                    <div class="vs-divider">VS</div>
+                    <div class="team">
+                        <div class="team-name">${match.team2}</div>
+                        <div class="team-flag">${match.team2.charAt(0)}</div>
+                    </div>
+                </div>
+                
+                <div class="prediction-section">
+                    <div class="prediction-group">
+                        <div class="prediction-label winner">Match Winner</div>
+                        <div class="prediction-options">
+                            <button class="prediction-btn" onclick="selectPrediction('${matchId}', 'winner', '${match.team1}')">${match.team1}</button>
+                            <button class="prediction-btn" onclick="selectPrediction('${matchId}', 'winner', '${match.team2}')">${match.team2}</button>
+                        </div>
+                    </div>
+                    
+                    <div class="prediction-group">
+                        <div class="prediction-label motm">Player of the Match</div>
+                        <div class="player-options">
+                            ${players.length > 0 ? 
+                                players.map(player => 
+                                    `<button class="prediction-btn" onclick="selectPrediction('${matchId}', 'motm', '${player.name}')">${player.name} (${player.team})</button>`
+                                ).join('') :
+                                `<div style="color: #aaa; text-align: center; padding: 20px;">
+                                    Loading players... Please wait
+                                </div>`
+                            }
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bet-section">
+                    <div class="bet-section-label">Select Bet Amount</div>
+                    <div class="amount-buttons">
+                        ${betAmounts.map(amount => 
+                            `<button class="amount-btn" onclick="selectAmount(${amount})">₹${amount}</button>`
+                        ).join('')}
+                    </div>
+                    <div class="selected-amount-display" id="selected-amount-${matchId}">
+                        No amount selected
+                    </div>
+                    <button class="place-bet-btn" onclick="placeBet('${matchId}')" id="bet-btn-${matchId}" disabled>
+                        Place Bet
+                    </button>
+                </div>
+                
+                <div class="return-info">
+                    <strong>3X Return Policy:</strong> Predict both the match winner and player of the match correctly to win 3X your bet amount!
+                </div>
+            `;
+            
+            document.getElementById('matchModal').classList.add('active');
+        }
+
+        function closeMatchModal() {
+            document.getElementById('matchModal').classList.remove('active');
+            currentMatchId = null;
+            selectedAmount = 0;
+        }
+
+        function selectAmount(amount) {
+            selectedAmount = amount;
+            
+            // Update button states
+            document.querySelectorAll('.amount-btn').forEach(btn => btn.classList.remove('selected'));
+            event.target.classList.add('selected');
+            
+            // Update display
+            const display = document.getElementById(`selected-amount-${currentMatchId}`);
+            display.textContent = `Selected: ₹${amount}`;
+            display.style.color = '#dc2626';
+            
+            validateBet(currentMatchId);
+        }
+
+        function selectPrediction(matchId, type, value) {
+            if (!currentBets[matchId]) {
+                currentBets[matchId] = {};
+            }
+            
+            currentBets[matchId][type] = value;
+            
+            // Update button states
+            const allButtons = document.querySelectorAll(`[onclick*="selectPrediction('${matchId}', '${type}',"]`);
+            allButtons.forEach(btn => btn.classList.remove('selected'));
+            
+            event.target.classList.add('selected');
+            
+            validateBet(matchId);
+        }
+
+        function validateBet(matchId) {
+            const bet = currentBets[matchId] || {};
+            const placeBetBtn = document.getElementById(`bet-btn-${matchId}`);
+            
+            const isValid = bet.winner && bet.motm && selectedAmount > 0;
+            placeBetBtn.disabled = !isValid;
+        }
+
+        async function placeBet(matchId) {
+            const bet = currentBets[matchId];
+            
+            if (!bet || !bet.winner || !bet.motm || selectedAmount === 0) {
+                showNotification('Incomplete Bet', 'Please select both winner and player of the match, and choose a bet amount', 'error');
+                return;
+            }
+            
+            if (selectedAmount > userBalance) {
+                showNotification('Insufficient Balance', 'Please add money to your wallet first', 'error');
+                return;
+            }
+
+            const btn = document.getElementById(`bet-btn-${matchId}`);
+            btn.disabled = true;
+            btn.textContent = 'Placing Bet...';
+
+            try {
+                const response = await apiCall('/bets/place', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        matchId: currentMatchId,
+                        winnerPrediction: bet.winner,
+                        motmPrediction: bet.motm,
+                        amount: selectedAmount
+                    })
+                });
+
+                // Update balance
+                userBalance -= selectedAmount;
+                updateUserProfile();
+                
+                closeMatchModal();
+                showNotification('Bet Placed Successfully!', `₹${selectedAmount} deducted from your balance`, 'success');
+                
+                // Reset form
+                currentBets[currentMatchId] = {};
+                selectedAmount = 0;
+                
+                // Reload user bets
+                await loadUserBets();
+            } catch (error) {
+                showNotification('Bet Failed', error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Place Bet';
+            }
+        }
+
+        // Betting Functions
+        async function loadUserBets() {
+            try {
+                const response = await apiCall('/user/bets');
+                allBets = response.bets || [];
+                if (document.getElementById('mybets').classList.contains('active')) {
+                    renderBetHistory();
+                }
+            } catch (error) {
+                console.error('Failed to load bets:', error);
+            }
+        }
+
+        function renderBetHistory() {
+            const container = document.getElementById('betHistoryContainer');
+            
+            if (allBets.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 50px 20px; color: #666;">
+                        <div style="width: 60px; height: 60px; margin: 0 auto 20px; background: url('https://cdn-icons-png.flaticon.com/512/857/857418.png') no-repeat center; background-size: contain; opacity: 0.5;"></div>
+                        <h3 style="color: #dc2626; margin-bottom: 10px; font-size: 1.2rem;">No Bets Yet</h3>
+                        <p style="margin-bottom: 20px; font-size: 0.9rem;">Start betting on upcoming matches to see your history here!</p>
+                        <button onclick="showSection('home')" style="background: linear-gradient(45deg, #dc2626, #b91c1c); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            Place Your First Bet
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = allBets.map(bet => `
+                <div class="bet-item">
+                    <div class="bet-match">${bet.match_name}</div>
+                    <div class="bet-details">
+                        <strong>Winner:</strong> ${bet.winner_prediction} | <strong>Player of Match:</strong> ${bet.motm_prediction}
+                    </div>
+                    <div class="bet-details">
+                        <strong>Teams:</strong> ${bet.team1} vs ${bet.team2}
+                    </div>
+                    <div class="bet-footer">
+                        <div class="bet-amount">₹${bet.amount}</div>
+                        <div class="bet-status status-${bet.status}">
+                            ${bet.status.charAt(0).toUpperCase() + bet.status.slice(1)}
+                        </div>
+                    </div>
+                    <div style="margin-top: 10px; font-size: 0.8rem; color: #888;">
+                        Potential Return: ₹${bet.potential_return} | ${new Date(bet.created_at).toLocaleDateString()}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Profile Functions
+        function updateUserProfile() {
+            if (userData) {
+                document.getElementById('userName').textContent = userData.name;
+                document.getElementById('userDetails').textContent = `${userData.phone} • ${userData.city}`;
+                document.getElementById('userBalance').textContent = `₹${userBalance}`;
+                document.getElementById('withdrawBalance').textContent = `₹${userBalance}`;
+                // Update wallet balance if wallet section exists
+                const walletBalance = document.getElementById('walletBalance');
+                if (walletBalance) {
+                    walletBalance.textContent = `₹${userBalance}`;
+                }
+            }
+        }
+
+        function updateProfileStats(walletData) {
+            if (walletData) {
+                document.getElementById('totalBets').textContent = walletData.totalBets || 0;
+                document.getElementById('wonBets').textContent = walletData.wonBets || 0;
+                document.getElementById('totalStaked').textContent = `₹${walletData.totalStaked || 0}`;
+                document.getElementById('totalWinnings').textContent = `₹${walletData.totalWinnings || 0}`;
+            }
+        }
+
+        function editProfile() {
+            if (userData) {
+                alert(`Current Profile:\nName: ${userData.name}\nPhone: ${userData.phone}\nCity: ${userData.city}`);
+            }
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('cricketBetToken');
+                authToken = null;
+                userData = null;
+                userBalance = 0;
+                location.reload();
+            }
+        }
+
+        // Wallet Functions
+        let selectedWalletAmount = 0;
+
+        function switchWalletTab(tab) {
+            const addTab = document.getElementById('addMoneyTab');
+            const withdrawTab = document.getElementById('withdrawTab');
+            const tabs = document.querySelectorAll('.wallet-tab');
+
+            tabs.forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (tab === 'add') {
+                addTab.style.display = 'block';
+                withdrawTab.style.display = 'none';
+            } else {
+                addTab.style.display = 'none';
+                withdrawTab.style.display = 'block';
+            }
+        }
+
+        function selectWalletAmount(amount) {
+            selectedWalletAmount = amount;
+            
+            // Update button states
+            document.querySelectorAll('.wallet-amount-btn').forEach(btn => btn.classList.remove('selected'));
+            event.target.classList.add('selected');
+            
+            // Clear custom input
+            document.getElementById('customAddAmount').value = '';
+            
+            // Update display
+            updateAddAmountDisplay();
+        }
+
+        function updateAddAmountDisplay() {
+            const display = document.getElementById('selectedAddAmount');
+            const customAmount = document.getElementById('customAddAmount').value;
+            
+            if (customAmount) {
+                selectedWalletAmount = parseInt(customAmount);
+                display.textContent = `Amount to Add: ₹${customAmount}`;
+                // Clear button selections
+                document.querySelectorAll('.wallet-amount-btn').forEach(btn => btn.classList.remove('selected'));
+            } else if (selectedWalletAmount > 0) {
+                display.textContent = `Amount to Add: ₹${selectedWalletAmount}`;
+            } else {
+                display.textContent = 'Select or enter amount to add';
+            }
+        }
+
+        // Listen for custom amount input
+        document.addEventListener('DOMContentLoaded', function() {
+            const customInput = document.getElementById('customAddAmount');
+            if (customInput) {
+                customInput.addEventListener('input', updateAddAmountDisplay);
+            }
+        });
+
+        function processAddMoney() {
+            const customAmount = document.getElementById('customAddAmount').value;
+            const finalAmount = customAmount ? parseInt(customAmount) : selectedWalletAmount;
+            
+            if (!finalAmount || finalAmount < 50) {
+                showNotification('Invalid Amount', 'Minimum amount to add is ₹50', 'error');
+                return;
+            }
+            
+            if (finalAmount > 50000) {
+                showNotification('Amount Too High', 'Maximum amount to add is ₹50,000', 'error');
+                return;
+            }
+
+            // Show payment modal
+            document.getElementById('paymentAmount').textContent = `Amount to Add: ₹${finalAmount}`;
+            document.getElementById('paymentModal').classList.add('active');
+        }
+
+        function closePaymentModal() {
+            document.getElementById('paymentModal').classList.remove('active');
+            
+            // For demo purposes, add money to balance
+            const customAmount = document.getElementById('customAddAmount').value;
+            const finalAmount = customAmount ? parseInt(customAmount) : selectedWalletAmount;
+            
+            if (finalAmount > 0) {
+                userBalance += finalAmount;
+                updateUserProfile();
+                updateWalletBalance();
+                
+                showNotification('Money Added!', `₹${finalAmount} added to your wallet`, 'success');
+                
+                // Reset form
+                selectedWalletAmount = 0;
+                document.getElementById('customAddAmount').value = '';
+                document.querySelectorAll('.wallet-amount-btn').forEach(btn => btn.classList.remove('selected'));
+                updateAddAmountDisplay();
+            }
+        }
+
+        function processWithdrawFromWallet() {
+            const amount = parseInt(document.getElementById('withdrawAmount').value);
+            
+            if (!amount || amount < 100) {
+                showNotification('Invalid Amount', 'Minimum withdrawal amount is ₹100', 'error');
+                return;
+            }
+            
+            if (amount > userBalance) {
+                showNotification('Insufficient Balance', 'You don\'t have enough balance', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('withdrawFromWalletBtn');
+            btn.disabled = true;
+            btn.textContent = 'Processing...';
+
+            // Simulate API call
+            setTimeout(async () => {
+                try {
+                    await apiCall('/withdrawals/request', {
+                        method: 'POST',
+                        body: JSON.stringify({ amount })
+                    });
+
+                    userBalance -= amount;
+                    updateUserProfile();
+                    updateWalletBalance();
+                    document.getElementById('withdrawAmount').value = '';
+                    
+                    showNotification('Withdrawal Requested!', `₹${amount} withdrawal is being processed`, 'success');
+                } catch (error) {
+                    showNotification('Withdrawal Failed', error.message, 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = '🏦 Request Withdrawal';
+                }
+            }, 1000);
+        }
+
+        function updateWalletBalance() {
+            document.getElementById('walletBalance').textContent = `₹${userBalance}`;
+        }
+        function openWithdrawModal() {
+            if (userBalance < 100) {
+                showNotification('Insufficient Balance', 'Minimum withdrawal amount is ₹100', 'error');
+                return;
+            }
+            
+            document.getElementById('withdrawModal').classList.add('active');
+        }
+
+        function closeWithdrawModal() {
+            document.getElementById('withdrawModal').classList.remove('active');
+            document.getElementById('withdrawAmount').value = '';
+        }
+
+        async function processWithdraw() {
+            const amount = parseInt(document.getElementById('withdrawAmount').value);
+            
+            if (!amount || amount < 100) {
+                showNotification('Invalid Amount', 'Minimum withdrawal amount is ₹100', 'error');
+                return;
+            }
+            
+            if (amount > userBalance) {
+                showNotification('Insufficient Balance', 'You don\'t have enough balance', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('withdrawBtn');
+            btn.disabled = true;
+            btn.textContent = 'Processing...';
+
+            try {
+                await apiCall('/withdrawals/request', {
+                    method: 'POST',
+                    body: JSON.stringify({ amount })
+                });
+
+                userBalance -= amount;
+                updateUserProfile();
+                closeWithdrawModal();
+                
+                showNotification('Withdrawal Requested!', `₹${amount} withdrawal is being processed`, 'success');
+            } catch (error) {
+                showNotification('Withdrawal Failed', error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Request Withdrawal';
+            }
+        }
+
+        // Navigation Functions
+        function showSection(section) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            // Show selected section
+            document.getElementById(section).classList.add('active');
+            event.target.classList.add('active');
+            
+            if (section === 'mybets') {
+                renderBetHistory();
+            } else if (section === 'profile') {
+                initializeUserData();
+            } else if (section === 'wallet') {
+                updateWalletBalance();
+            }
+        }
+
+        // Utility Functions
+        function showNotification(title, message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 20px; height: 20px; background: url('${type === 'success' ? 'https://cdn-icons-png.flaticon.com/512/190/190411.png' : 'https://cdn-icons-png.flaticon.com/512/753/753345.png'}') no-repeat center; background-size: contain; filter: invert(1);"></div>
+                    <div>
+                        <div style="font-size: 0.9rem;">${title}</div>
+                        <small style="opacity: 0.9; font-size: 0.8rem;">${message}</small>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 4000);
+        }
+
+        function checkAuth() {
+            if (!authToken) {
+                document.getElementById('authModal').classList.add('active');
+                return false;
+            }
+            return true;
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show splash screen
+            setTimeout(() => {
+                hideSplashScreen();
+            }, 3000);
+        });
+
+        function hideSplashScreen() {
+            const splashScreen = document.getElementById('splashScreen');
+            splashScreen.classList.add('hidden');
+            
+            setTimeout(() => {
+                if (authToken) {
+                    initializeUserData();
+                } else {
+                    document.getElementById('authModal').classList.add('active');
+                }
+                
+                loadMatches();
+            }, 500);
+        }
+
+        // Close modals when clicking outside
+        document.getElementById('matchModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeMatchModal();
+            }
+        });
+
+        document.getElementById('paymentModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePaymentModal();
+            }
+        });
+
+        document.getElementById('withdrawModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeWithdrawModal();
+            }
+        });
+
+        // Auth modal should only close if user is logged in
+        document.getElementById('authModal').addEventListener('click', function(e) {
+            if (e.target === this && authToken) {
+                document.getElementById('authModal').classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -200,77 +200,6 @@ const fetchFromCricketAPI = async (endpoint) => {
   }
 };
 
-// Realistic cricket player names as fallback
-const realisticSquads = {
-  "England": [
-    "Joe Root", "Ben Stokes", "Harry Brook", "Jonny Bairstow", "Jos Buttler",
-    "Zak Crawley", "Ollie Pope", "Chris Woakes", "Mark Wood", "James Anderson",
-    "Stuart Broad", "Moeen Ali", "Liam Livingstone", "Sam Curran", "Jofra Archer"
-  ],
-  "India": [
-    "Virat Kohli", "Rohit Sharma", "KL Rahul", "Rishabh Pant", "Hardik Pandya",
-    "Ravindra Jadeja", "Jasprit Bumrah", "Mohammed Shami", "Shubman Gill", 
-    "Yashasvi Jaiswal", "Kuldeep Yadav", "Mohammed Siraj", "Axar Patel", "Ishan Kishan", "Shreyas Iyer"
-  ],
-  "Australia": [
-    "Steve Smith", "David Warner", "Pat Cummins", "Mitchell Starc", "Glenn Maxwell",
-    "Alex Carey", "Travis Head", "Josh Hazlewood", "Marnus Labuschagne", "Cameron Green",
-    "Nathan Lyon", "Mitchell Marsh", "Josh Inglis", "Sean Abbott", "Spencer Johnson"
-  ],
-  "South Africa": [
-    "Quinton de Kock", "Temba Bavuma", "Rassie van der Dussen", "Aiden Markram", "David Miller",
-    "Heinrich Klaasen", "Marco Jansen", "Kagiso Rabada", "Anrich Nortje", "Lungi Ngidi",
-    "Keshav Maharaj", "Tabraiz Shamsi", "Reeza Hendricks", "Tristan Stubbs", "Gerald Coetzee"
-  ],
-  "West Indies": [
-    "Nicholas Pooran", "Shai Hope", "Jason Holder", "Alzarri Joseph", "Shimron Hetmyer",
-    "Kyle Mayers", "Kemar Roach", "Kraigg Brathwaite", "Brandon King", "Akeal Hosein",
-    "Gudakesh Motie", "Romario Shepherd", "Johnson Charles", "Roston Chase", "Obed McCoy"
-  ],
-  "New Zealand": [
-    "Kane Williamson", "Trent Boult", "Tim Southee", "Devon Conway", "Tom Latham",
-    "Kyle Jamieson", "Mitchell Santner", "Matt Henry", "Daryl Mitchell", "Neil Wagner",
-    "Will Young", "Glenn Phillips", "Adam Milne", "Ish Sodhi", "Michael Bracewell"
-  ],
-  "Pakistan": [
-    "Babar Azam", "Mohammad Rizwan", "Shaheen Afridi", "Naseem Shah", "Fakhar Zaman",
-    "Mohammad Nawaz", "Shadab Khan", "Haris Rauf", "Imam-ul-Haq", "Sarfaraz Ahmed",
-    "Shan Masood", "Abdullah Shafique", "Usama Mir", "Mohammad Wasim", "Faheem Ashraf"
-  ],
-  "Sri Lanka": [
-    "Kusal Mendis", "Dimuth Karunaratne", "Angelo Mathews", "Wanindu Hasaranga", "Dushmantha Chameera",
-    "Pathum Nissanka", "Dinesh Chandimal", "Dasun Shanaka", "Chamika Karunaratne", "Maheesh Theekshana",
-    "Kasun Rajitha", "Dhananjaya de Silva", "Kusal Perera", "Charith Asalanka", "Nuwan Thushara"
-  ],
-  "Bangladesh": [
-    "Shakib Al Hasan", "Mushfiqur Rahim", "Tamim Iqbal", "Mustafizur Rahman", "Mahmudullah",
-    "Liton Das", "Mehidy Hasan", "Taskin Ahmed", "Najmul Hossain", "Soumya Sarkar",
-    "Shoriful Islam", "Afif Hossain", "Nurul Hasan", "Yasir Ali", "Ebadot Hossain"
-  ]
-};
-
-// Function to get realistic players for a team
-const getRealisticPlayersForTeam = (teamName, count = 5) => {
-  // Try to match team name to country
-  const country = Object.keys(realisticSquads).find(c => 
-    teamName.toLowerCase().includes(c.toLowerCase()) ||
-    c.toLowerCase().includes(teamName.toLowerCase())
-  );
-  
-  if (country && realisticSquads[country]) {
-    return realisticSquads[country].slice(0, count);
-  }
-  
-  // Fallback to generic names if country not found
-  return [
-    `${teamName} Captain`,
-    `${teamName} Batsman`,
-    `${teamName} Bowler`,
-    `${teamName} All-rounder`,
-    `${teamName} Wicket Keeper`
-  ].slice(0, count);
-};
-
 const syncMatchesFromAPI = async () => {
   const client = await pool.connect();
   try {
@@ -319,49 +248,31 @@ const syncMatchesFromAPI = async () => {
           match.matchEnded || false
         ]);
 
-        // Fetch real squad or use realistic players
+        // Add sample players for matches with squads
         if (match.hasSquad && !match.matchEnded) {
           // Clear existing players for this match
           await client.query('DELETE FROM players WHERE match_id = $1', [match.id]);
           
-          let playersToAdd = [];
-          
-          try {
-            // Try to fetch real squad from API
-            console.log(`🔄 Fetching squad for match: ${match.name}`);
-            const squadData = await fetchFromCricketAPI(`match_squad&id=${match.id}`);
-            
-            if (squadData && squadData.length > 0) {
-              console.log(`✅ Found real squad data for ${match.name}`);
-              playersToAdd = squadData.map(player => ({
-                name: player.name || player.player || 'Unknown Player',
-                team: player.team || (squadData.indexOf(player) < squadData.length / 2 ? team1 : team2)
-              }));
-            } else {
-              throw new Error('No squad data returned');
-            }
-          } catch (squadError) {
-            console.log(`⚠️ Squad API failed for ${match.name}, using realistic players`);
-            
-            // Use realistic cricket player names as fallback
-            const team1Players = getRealisticPlayersForTeam(team1, 5);
-            const team2Players = getRealisticPlayersForTeam(team2, 5);
-            
-            playersToAdd = [
-              ...team1Players.map(name => ({ name, team: team1 })),
-              ...team2Players.map(name => ({ name, team: team2 }))
-            ];
-          }
+          // Add sample players (in production, you'd fetch real squad data)
+          const samplePlayers = [
+            { name: 'Captain 1', team: team1 },
+            { name: 'Batsman 1', team: team1 },
+            { name: 'Bowler 1', team: team1 },
+            { name: 'All-rounder 1', team: team1 },
+            { name: 'Wicket Keeper 1', team: team1 },
+            { name: 'Captain 2', team: team2 },
+            { name: 'Batsman 2', team: team2 },
+            { name: 'Bowler 2', team: team2 },
+            { name: 'All-rounder 2', team: team2 },
+            { name: 'Wicket Keeper 2', team: team2 }
+          ];
 
-          // Add players to database
-          for (const player of playersToAdd) {
+          for (const player of samplePlayers) {
             await client.query(
               'INSERT INTO players (name, team, match_id) VALUES ($1, $2, $3)',
               [player.name, player.team, match.id]
             );
           }
-          
-          console.log(`✅ Added ${playersToAdd.length} players for ${match.name}`);
         }
 
         syncedCount++;
